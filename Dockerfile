@@ -1,15 +1,21 @@
-FROM eclipse-temurin:17-jdk-jammy
+FROM maven:3.9.9-eclipse-temurin-17 AS build
+
+WORKDIR /workspace
+
+COPY pom.xml .
+COPY src ./src
+
+RUN mvn -B -DskipTests package
+
+FROM eclipse-temurin:17-jre-jammy
 
 WORKDIR /app
 
-COPY . .
+COPY --from=build /workspace/target/quarkus-app ./quarkus-app
 
-RUN chmod +x mvnw
-
-RUN ./mvnw -DskipTests package
-
-ENV PORT=8080
 ENV QUARKUS_HTTP_PORT=8080
 ENV QUARKUS_HTTP_HOST=0.0.0.0
 
-CMD ["java", "-jar", "target/quarkus-app/quarkus-run.jar"]
+EXPOSE 8080
+
+CMD ["java", "-jar", "./quarkus-app/quarkus-run.jar"]
